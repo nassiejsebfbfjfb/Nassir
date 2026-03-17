@@ -1,424 +1,433 @@
-import random
-from typing import List, Optional
+// Game State
+const gameState = {
+    numPlayers: 0,
+    players: [],
+    currentPlayerIndex: 0,
+    round: 1,
+    board: [],
+    gameActive: true,
+    selectedToken: null
+};
 
-class Property:
-    """Represents a property on the Monopoly board"""
-    def __init__(self, name: str, purchase_price: int, color: str, rent_price: int = None):
-        self.name = name
-        self.purchase_price = purchase_price
-        self.color = color
-        self.owner = None
-        self.houses = 0
-        self.hotels = 0
-        self.is_mortgaged = False
-        self.rent_price = rent_price or (purchase_price // 10)
-    
-    def __repr__(self):
-        return f"{self.name} ({self.color})"
+// Animal Tokens
+const animalTokens = [
+    '🐪', '🐕', '🐈', '🐸', '🦁', '🐢', '🦊', '🐻',
+    '🦉', '🦆', '🐙', '🦅', '🐘', '🦒', '🦓', '🦏',
+    '🦛', '🦘', '🐨', '🐅', '🦣', '🦬', '🦡', '🦝'
+];
 
-class Player:
-    """Represents a player in the Monopoly game"""
-    def __init__(self, name: str, animal_token: str, starting_money: int = 1500):
-        self.name = name
-        self.animal_token = animal_token
-        self.balance = starting_money
-        self.position = 0
-        self.properties: List[Property] = []
-        self.is_bankrupt = False
-        self.jail_turns = 0
-        self.in_jail = False
-    
-    def __repr__(self):
-        return f"{self.name} ({self.animal_token}) - Balance: ${self.balance}"
-    
-    def move(self, spaces: int, board_size: int = 40):
-        """Move the player forward on the board"""
-        old_position = self.position
-        self.position = (self.position + spaces) % board_size
-        if old_position + spaces >= board_size:
-            self.collect_go_money()
-    
-    def collect_go_money(self, amount: int = 200):
-        """Collect money for passing GO"""
-        self.balance += amount
-        print(f"  🎉 {self.name} passed GO and collected ${amount}!")
-    
-    def pay(self, amount: int) -> bool:
-        """Deduct money from player's balance"""
-        if self.balance >= amount:
-            self.balance -= amount
-            return True
-        return False
-    
-    def receive_money(self, amount: int):
-        """Add money to player's balance"""
-        self.balance += amount
-    
-    def buy_property(self, property_obj: Property) -> bool:
-        """Buy a property if player has enough money"""
-        if self.pay(property_obj.purchase_price):
-            property_obj.owner = self
-            self.properties.append(property_obj)
-            print(f"✅ {self.name} bought {property_obj.name} for ${property_obj.purchase_price}")
-            return True
-        return False
-    
-    def get_total_assets(self) -> int:
-        """Calculate total worth including cash and property value"""
-        property_value = sum(p.purchase_price for p in self.properties)
-        return self.balance + property_value
+// Board Spaces
+const boardSpaces = [
+    { name: 'GO', type: 'go', price: 0 },
+    { name: 'Mediterranean Avenue', type: 'property', price: 60, color: '#8B4513' },
+    { name: 'Community Chest', type: 'chest', price: 0 },
+    { name: 'Baltic Avenue', type: 'property', price: 60, color: '#8B4513' },
+    { name: 'Income Tax', type: 'tax', price: 200 },
+    { name: 'Reading Railroad', type: 'railroad', price: 200 },
+    { name: 'Oriental Avenue', type: 'property', price: 100, color: '#ADD8E6' },
+    { name: 'Chance', type: 'chance', price: 0 },
+    { name: 'Vermont Avenue', type: 'property', price: 100, color: '#ADD8E6' },
+    { name: 'Connecticut Avenue', type: 'property', price: 120, color: '#ADD8E6' },
+    { name: 'Jail', type: 'jail', price: 0 },
+    { name: 'St. Charles Place', type: 'property', price: 140, color: '#FFB6C1' },
+    { name: 'Electric Company', type: 'utility', price: 150 },
+    { name: 'States Avenue', type: 'property', price: 140, color: '#FFB6C1' },
+    { name: 'Virginia Avenue', type: 'property', price: 160, color: '#FFB6C1' },
+    { name: 'St. James Place', type: 'property', price: 180, color: '#FFA500' },
+    { name: 'Community Chest', type: 'chest', price: 0 },
+    { name: 'Tennessee Avenue', type: 'property', price: 180, color: '#FFA500' },
+    { name: 'New York Avenue', type: 'property', price: 200, color: '#FFA500' },
+    { name: 'Free Parking', type: 'parking', price: 0 },
+    { name: 'Kentucky Avenue', type: 'property', price: 220, color: '#FF0000' },
+    { name: 'Chance', type: 'chance', price: 0 },
+    { name: 'Indiana Avenue', type: 'property', price: 220, color: '#FF0000' },
+    { name: 'Illinois Avenue', type: 'property', price: 240, color: '#FF0000' },
+    { name: 'B&O Railroad', type: 'railroad', price: 200 },
+    { name: 'Atlantic Avenue', type: 'property', price: 260, color: '#FFFF00' },
+    { name: 'Ventnor Avenue', type: 'property', price: 260, color: '#FFFF00' },
+    { name: 'Water Works', type: 'utility', price: 150 },
+    { name: 'Marvin Gardens', type: 'property', price: 280, color: '#FFFF00' },
+    { name: 'Go To Jail', type: 'gotojail', price: 0 },
+    { name: 'Pacific Avenue', type: 'property', price: 300, color: '#00B050' },
+    { name: 'North Carolina Avenue', type: 'property', price: 300, color: '#00B050' },
+    { name: 'Community Chest', type: 'chest', price: 0 },
+    { name: 'Pennsylvania Avenue', type: 'property', price: 320, color: '#00B050' },
+    { name: 'Short Line', type: 'railroad', price: 200 },
+    { name: 'Chance', type: 'chance', price: 0 },
+    { name: 'Park Place', type: 'property', price: 350, color: '#00008B' },
+    { name: 'Luxury Tax', type: 'tax', price: 75 },
+    { name: 'Boardwalk', type: 'property', price: 400, color: '#00008B' }
+];
 
-class Monopoly:
-    """Main Monopoly game class"""
-    
-    ANIMAL_TOKENS = [
-        "🐪 Camel",
-        "🐕 Dog",
-        "🐈 Cat",
-        "🐸 Frog",
-        "🦁 Lion",
-        "🐢 Turtle",
-        "🦊 Fox",
-        "🐻 Bear",
-        "🦉 Owl",
-        "🦆 Duck",
-        "🐙 Octopus",
-        "🦅 Eagle",
-        "🐘 Elephant",
-        "🦒 Giraffe",
-        "🦓 Zebra",
-        "🦁 Lion",
-        "🐅 Tiger",
-        "🦁 Lion",
-        "🐘 Elephant",
-        "🦏 Rhino",
-        "🦛 Hippo",
-        "🦘 Kangaroo",
-        "🐨 Koala",
-        "🦘 Kangaroo",
-    ]
-    
-    BOARD_SPACES = [
-        ("GO", None, None),
-        ("Mediterranean Avenue", 60, "Brown"),
-        ("Community Chest", None, None),
-        ("Baltic Avenue", 60, "Brown"),
-        ("Income Tax", None, None),
-        ("Reading Railroad", 200, "Railroad"),
-        ("Oriental Avenue", 100, "Light Blue"),
-        ("Chance", None, None),
-        ("Vermont Avenue", 100, "Light Blue"),
-        ("Connecticut Avenue", 120, "Light Blue"),
-        ("Jail", None, None),
-        ("St. Charles Place", 140, "Pink"),
-        ("Electric Company", 150, "Utility"),
-        ("States Avenue", 140, "Pink"),
-        ("Virginia Avenue", 160, "Pink"),
-        ("St. James Place", 180, "Orange"),
-        ("Community Chest", None, None),
-        ("Tennessee Avenue", 180, "Orange"),
-        ("New York Avenue", 200, "Orange"),
-        ("Free Parking", None, None),
-        ("Kentucky Avenue", 220, "Red"),
-        ("Chance", None, None),
-        ("Indiana Avenue", 220, "Red"),
-        ("Illinois Avenue", 240, "Red"),
-        ("B&O Railroad", 200, "Railroad"),
-        ("Atlantic Avenue", 260, "Yellow"),
-        ("Ventnor Avenue", 260, "Yellow"),
-        ("Water Works", 150, "Utility"),
-        ("Marvin Gardens", 280, "Yellow"),
-        ("Go To Jail", None, None),
-        ("Pacific Avenue", 300, "Green"),
-        ("North Carolina Avenue", 300, "Green"),
-        ("Community Chest", None, None),
-        ("Pennsylvania Avenue", 320, "Green"),
-        ("Short Line", 200, "Railroad"),
-        ("Chance", None, None),
-        ("Park Place", 350, "Dark Blue"),
-        ("Luxury Tax", None, None),
-        ("Boardwalk", 400, "Dark Blue"),
-    ]
-    
-    def __init__(self):
-        self.players: List[Player] = []
-        self.current_player_index = 0
-        self.round_number = 0
-        self.board: List[Optional[Property]] = []
-        self.create_board()
-        self.available_tokens = self.ANIMAL_TOKENS.copy()
-    
-    def create_board(self):
-        """Create the board with properties"""
-        for space_name, price, color in self.BOARD_SPACES:
-            if price is not None:
-                self.board.append(Property(space_name, price, color))
-            else:
-                self.board.append(None)
-    
-    def add_player(self, name: str, animal_token: str) -> Optional[Player]:
-        """Add a player to the game"""
-        if len(self.players) >= 8:
-            print("❌ Maximum 8 players allowed!")
-            return None
-        
-        if animal_token not in self.available_tokens:
-            print(f"❌ That token is not available!")
-            return None
-        
-        # Check if token is already taken
-        for player in self.players:
-            if player.animal_token == animal_token:
-                print(f"❌ {animal_token} is already taken!")
-                return None
-        
-        player = Player(name, animal_token)
-        self.players.append(player)
-        self.available_tokens.remove(animal_token)
-        print(f"✅ {player} joined the game!")
-        return player
-    
-    def setup_game(self):
-        """Interactive setup for the game"""
-        print("\n" + "=" * 70)
-        print("🎲" * 10 + " WELCOME TO MONOPOLY " + "🎲" * 10)
-        print("=" * 70)
-        
-        # Get number of players
-        while True:
-            try:
-                num_players = int(input("\n📊 How many players? (2-8): "))
-                if 2 <= num_players <= 8:
-                    break
-                print("⚠️  Please enter a number between 2 and 8.")
-            except ValueError:
-                print("⚠️  Please enter a valid number.")
-        
-        print(f"\n📝 Setting up {num_players} players...\n")
-        
-        # Add players
-        for i in range(num_players):
-            print(f"\n{'─' * 70}")
-            print(f"PLAYER {i + 1} SETUP")
-            print(f"{'─' * 70}")
-            
-            # Get player name
-            name = input("👤 Enter player name: ").strip()
-            if not name:
-                name = f"Player {i + 1}"
-            
-            # Show available tokens
-            print(f"\n🎭 Available animal tokens:")
-            for idx, token in enumerate(self.available_tokens, 1):
-                print(f"  {idx}. {token}")
-            
-            # Get token choice
-            while True:
-                try:
-                    token_choice = int(input(f"\n🎭 {name}, choose a token number: "))
-                    if 1 <= token_choice <= len(self.available_tokens):
-                        chosen_token = self.available_tokens[token_choice - 1]
-                        if self.add_player(name, chosen_token):
-                            break
-                    else:
-                        print("⚠️  Invalid choice. Please try again.")
-                except ValueError:
-                    print("⚠️  Please enter a valid number.")
-        
-        print("\n" + "=" * 70)
-        print("✅ GAME SETUP COMPLETE!")
-        print("=" * 70)
-        self.display_players()
-    
-    def display_players(self):
-        """Display all players' current status"""
-        print("\n📊 PLAYER STATUS:")
-        print("─" * 70)
-        for i, player in enumerate(self.players, 1):
-            status = "🚫 BANKRUPT" if player.is_bankrupt else f"💰 ${player.balance}"
-            properties_count = len(player.properties)
-            space_name = self.BOARD_SPACES[player.position][0]
-            print(f"  {i}. {player.animal_token} {player.name}")
-            print(f"     └─ {status} | Properties: {properties_count} | Location: {space_name}")
-    
-    def roll_dice(self) -> int:
-        """Roll two dice"""
-        dice1 = random.randint(1, 6)
-        dice2 = random.randint(1, 6)
-        total = dice1 + dice2
-        print(f"  🎲 Rolled: {dice1} + {dice2} = {total}")
-        if dice1 == dice2:
-            print(f"  🎉 Doubles! {self.current_player.name} rolls again!")
-        return total
-    
-    @property
-    def current_player(self) -> Player:
-        """Get the current active player"""
-        return self.players[self.current_player_index]
-    
-    def next_turn(self):
-        """Move to the next player's turn"""
-        self.current_player_index = (self.current_player_index + 1) % len(self.players)
-    
-    def handle_property_landing(self, player: Player, property_obj: Property):
-        """Handle when a player lands on a property"""
-        if property_obj.owner is None:
-            print(f"\n🏠 Unowned property: {property_obj.name}")
-            print(f"   💵 Purchase Price: ${property_obj.purchase_price}")
-            print(f"   💰 Rent: ${property_obj.rent_price}")
-            
-            buy = input(f"   Do you want to buy it? (yes/no): ").lower().strip()
-            if buy in ["yes", "y"]:
-                if player.buy_property(property_obj):
-                    pass
-                else:
-                    print(f"   ❌ Insufficient funds! You need ${property_obj.purchase_price} but only have ${player.balance}")
-            else:
-                print(f"   ➖ Property passed...")
-        
-        elif property_obj.owner != player:
-            rent = property_obj.rent_price
-            print(f"\n💸 {property_obj.name} is owned by {property_obj.owner.name}")
-            print(f"   Rent due: ${rent}")
-            
-            if player.pay(rent):
-                property_obj.owner.receive_money(rent)
-                print(f"   ✅ {player.name} paid ${rent} to {property_obj.owner.name}")
-            else:
-                remaining_debt = rent - player.balance
-                property_obj.owner.receive_money(player.balance)
-                player.balance = 0
-                player.is_bankrupt = True
-                print(f"   ❌ {player.name} cannot pay full rent (needed ${rent}, had ${player.balance}) and is BANKRUPT!")
-        
-        else:
-            print(f"   ✨ {player.name} owns this property!")
-    
-    def play_turn(self):
-        """Execute one player's turn"""
-        player = self.current_player
-        
-        if player.is_bankrupt:
-            print(f"\n⏭️  {player.name} is bankrupt, skipping turn...")
-            self.next_turn()
-            return
-        
-        print(f"\n{'=' * 70}")
-        print(f"🎮 {player.animal_token} {player.name}'s Turn")
-        print(f"{'=' * 70}")
-        print(f"💰 Cash: ${player.balance} | Properties: {len(player.properties)} | Total Assets: ${player.get_total_assets()}")
-        
-        # Roll dice
-        spaces = self.roll_dice()
-        player.move(spaces)
-        
-        space_name, price, color = self.BOARD_SPACES[player.position]
-        print(f"  📍 {player.name} landed on: {space_name}")
-        
-        # Handle special spaces
-        if space_name == "Go To Jail":
-            print(f"  🚔 {player.name} goes to Jail!")
-            player.position = 10
-            player.in_jail = True
-        
-        elif space_name == "Free Parking":
-            print(f"  🅿️  Free Parking - Nothing happens")
-        
-        elif space_name == "Jail":
-            print(f"  🚔 Just visiting jail")
-        
-        elif space_name == "Income Tax":
-            tax = min(200, player.balance // 10)
-            player.pay(tax)
-            print(f"  💸 Income tax: ${tax}")
-        
-        elif space_name == "Luxury Tax":
-            tax = min(75, player.balance)
-            player.pay(tax)
-            print(f"  💸 Luxury tax: ${tax}")
-        
-        elif space_name in ["Community Chest", "Chance"]:
-            print(f"  🎰 {space_name}: Draw a card! (Coming soon)")
-        
-        elif price is not None:
-            # It's a purchasable property
-            property_obj = self.board[player.position]
-            if property_obj:
-                self.handle_property_landing(player, property_obj)
-        
-        self.next_turn()
-    
-    def play_game(self, num_rounds: int = 10):
-        """Play the game for a specified number of rounds"""
-        print(f"\n🎮 Starting game with {len(self.players)} players... Playing {num_rounds} rounds!\n")
-        
-        for round_num in range(num_rounds):
-            print(f"\n{'#' * 70}")
-            print(f"ROUND {round_num + 1}/{num_rounds}")
-            print(f"{'#' * 70}")
-            
-            active_players = [p for p in self.players if not p.is_bankrupt]
-            if len(active_players) <= 1:
-                print("\n❌ Game Over: Only one player left!")
-                break
-            
-            for _ in range(len(self.players)):
-                active_players = [p for p in self.players if not p.is_bankrupt]
-                if len(active_players) <= 1:
-                    break
-                self.play_turn()
-            
-            self.display_players()
-            
-            # Ask to continue after each round
-            if round_num < num_rounds - 1:
-                cont = input("\n⏱️  Continue to next round? (yes/no): ").lower().strip()
-                if cont in ["no", "n"]:
-                    print("Ending game early...")
-                    break
+// Property Class
+class Property {
+    constructor(space) {
+        this.name = space.name;
+        this.type = space.type;
+        this.price = space.price;
+        this.color = space.color;
+        this.owner = null;
+    }
+}
 
-def main():
-    """Run the game"""
-    try:
-        game = Monopoly()
-        game.setup_game()
-        
-        # Play the game
-        try:
-            num_rounds = int(input("\n⏱️  How many rounds would you like to play? (default 10): ") or "10")
-            if num_rounds < 1:
-                num_rounds = 10
-        except ValueError:
-            num_rounds = 10
-        
-        game.play_game(num_rounds)
-        
-        print("\n" + "=" * 70)
-        print("🏁 GAME ENDED - FINAL STANDINGS")
-        print("=" * 70)
-        game.display_players()
-        
-        # Determine winner
-        if game.players:
-            winner = max(game.players, key=lambda p: p.get_total_assets())
-            print(f"\n🏆 WINNER: {winner.animal_token} {winner.name}")
-            print(f"   Total Assets: ${winner.get_total_assets()}")
-            print(f"   Cash: ${winner.balance}")
-            print(f"   Properties: {len(winner.properties)}")
-            
-            if winner.properties:
-                print(f"   Properties owned:")
-                for prop in winner.properties:
-                    print(f"      - {prop.name} (${prop.purchase_price})")
-        
-        print("\n" + "=" * 70)
-        print("Thanks for playing Monopoly! 🎲")
-        print("=" * 70 + "\n")
-    
-    except KeyboardInterrupt:
-        print("\n\nGame interrupted. Thanks for playing!")
-    except Exception as e:
-        print(f"\n❌ An error occurred: {e}")
+// Player Class
+class Player {
+    constructor(name, token) {
+        this.name = name;
+        this.token = token;
+        this.balance = 1500;
+        this.position = 0;
+        this.properties = [];
+        this.isBankrupt = false;
+    }
+}
 
-if __name__ == "__main__":
-    main()
+// Set number of players
+function setPlayers(num) {
+    gameState.numPlayers = num;
+    gameState.players = [];
+    
+    document.getElementById('setupScreen').classList.remove('active');
+    document.getElementById('playerSetupScreen').classList.add('active');
+    
+    renderPlayerSetup();
+}
+
+// Render Player Setup
+function renderPlayerSetup() {
+    document.getElementById('playerNameInput').value = '';
+    gameState.selectedToken = null;
+    renderTokenGrid();
+    updatePlayerList();
+}
+
+// Render Token Grid
+function renderTokenGrid() {
+    const tokenGrid = document.getElementById('tokenGrid');
+    tokenGrid.innerHTML = '';
+    
+    const usedTokens = gameState.players.map(p => p.token);
+    
+    animalTokens.forEach(token => {
+        const tokenDiv = document.createElement('div');
+        tokenDiv.className = 'token-option';
+        if (usedTokens.includes(token)) {
+            tokenDiv.classList.add('disabled');
+        }
+        if (token === gameState.selectedToken) {
+            tokenDiv.classList.add('selected');
+        }
+        tokenDiv.textContent = token;
+        tokenDiv.onclick = () => {
+            if (!usedTokens.includes(token)) {
+                gameState.selectedToken = token;
+                renderTokenGrid();
+            }
+        };
+        tokenGrid.appendChild(tokenDiv);
+    });
+}
+
+// Update Player List
+function updatePlayerList() {
+    const playerList = document.getElementById('playerList');
+    const currentPlayer = gameState.players.length + 1;
+    
+    document.getElementById('currentPlayerSetup').textContent = `Player ${currentPlayer}: Enter your name and choose a token`;
+    
+    playerList.innerHTML = gameState.players
+        .map((p, i) => `<li>${i + 1}. ${p.token} ${p.name}</li>`)
+        .join('');
+    
+    if (gameState.players.length === gameState.numPlayers) {
+        document.getElementById('nextPlayerBtn').style.display = 'none';
+        document.getElementById('startGameBtn').style.display = 'inline-block';
+    } else {
+        document.getElementById('nextPlayerBtn').style.display = 'inline-block';
+        document.getElementById('startGameBtn').style.display = 'none';
+    }
+}
+
+// Add Player
+function addPlayer() {
+    const name = document.getElementById('playerNameInput').value.trim();
+    
+    if (!name) {
+        alert('Please enter a player name!');
+        return;
+    }
+    
+    if (!gameState.selectedToken) {
+        alert('Please select an animal token!');
+        return;
+    }
+    
+    const player = new Player(name, gameState.selectedToken);
+    gameState.players.push(player);
+    
+    document.getElementById('playerNameInput').value = '';
+    gameState.selectedToken = null;
+    
+    updatePlayerList();
+    renderTokenGrid();
+}
+
+// Go Back to Setup
+function goBackToSetup() {
+    document.getElementById('playerSetupScreen').classList.remove('active');
+    document.getElementById('setupScreen').classList.add('active');
+    gameState.players = [];
+    gameState.numPlayers = 0;
+}
+
+// Initialize Board
+function initializeBoard() {
+    gameState.board = boardSpaces.map(space => new Property(space));
+}
+
+// Start Game
+function startGame() {
+    initializeBoard();
+    gameState.currentPlayerIndex = 0;
+    gameState.round = 1;
+    
+    document.getElementById('playerSetupScreen').classList.remove('active');
+    document.getElementById('gameScreen').classList.add('active');
+    
+    updateGameDisplay();
+}
+
+// Update Game Display
+function updateGameDisplay() {
+    const player = gameState.players[gameState.currentPlayerIndex];
+    
+    document.getElementById('currentPlayerName').textContent = `${player.token} ${player.name}'s Turn`;
+    document.getElementById('playerBalance').textContent = `$${player.balance}`;
+    document.getElementById('playerPosition').textContent = boardSpaces[player.position].name;
+    document.getElementById('playerProperties').textContent = player.properties.length;
+    document.getElementById('roundNumber').textContent = gameState.round;
+    document.getElementById('activePlayers').textContent = gameState.players.filter(p => !p.isBankrupt).length;
+    
+    updateBoardDisplay();
+    updatePlayerStatusGrid();
+    resetActionButtons();
+    document.getElementById('actionMessage').textContent = `${player.token} ${player.name} is ready to roll!`;
+    document.getElementById('actionMessage').classList.remove('error', 'success');
+}
+
+// Update Board Display - Show player positions
+function updateBoardDisplay() {
+    // Clear all player displays
+    for (let i = 0; i < 40; i++) {
+        const playersDiv = document.getElementById(`players${i}`);
+        if (playersDiv) {
+            playersDiv.innerHTML = '';
+        }
+    }
+    
+    // Add players to their positions
+    gameState.players.forEach(player => {
+        const playersDiv = document.getElementById(`players${player.position}`);
+        if (playersDiv) {
+            const tokenSpan = document.createElement('div');
+            tokenSpan.className = 'player-token-small';
+            tokenSpan.textContent = player.token;
+            tokenSpan.title = player.name;
+            playersDiv.appendChild(tokenSpan);
+        }
+    });
+}
+
+// Update Player Status Grid
+function updatePlayerStatusGrid() {
+    const grid = document.getElementById('playerStatusGrid');
+    grid.innerHTML = gameState.players
+        .map((p, i) => `
+            <div class="player-status ${i === gameState.currentPlayerIndex ? 'current' : ''} ${p.isBankrupt ? 'bankrupt' : ''}">
+                <div class="player-status-token">${p.token}</div>
+                <div class="player-status-name">${p.name}</div>
+                <div class="player-status-money">💰 $${p.balance}</div>
+                <div class="player-status-money">🏠 ${p.properties.length}</div>
+            </div>
+        `)
+        .join('');
+}
+
+// Reset Action Buttons
+function resetActionButtons() {
+    document.getElementById('rollDiceBtn').style.display = 'block';
+    document.getElementById('buyPropertyBtn').style.display = 'none';
+    document.getElementById('endTurnBtn').style.display = 'none';
+}
+
+// Roll Dice
+function rollDice() {
+    const player = gameState.players[gameState.currentPlayerIndex];
+    
+    if (player.isBankrupt) {
+        endTurn();
+        return;
+    }
+    
+    const dice1 = Math.floor(Math.random() * 6) + 1;
+    const dice2 = Math.floor(Math.random() * 6) + 1;
+    const total = dice1 + dice2;
+    
+    document.getElementById('actionMessage').textContent = `🎲 ${player.token} ${player.name} rolled ${dice1} + ${dice2} = ${total}`;
+    
+    player.position = (player.position + total) % 40;
+    
+    if ((player.position + total) >= 40) {
+        player.balance += 200;
+        document.getElementById('actionMessage').textContent += ` 🎉 Passed GO! Collected $200!`;
+    }
+    
+    document.getElementById('rollDiceBtn').disabled = true;
+    
+    setTimeout(() => {
+        handleLanding(player);
+        document.getElementById('rollDiceBtn').disabled = false;
+    }, 1000);
+}
+
+// Handle Landing on Space
+function handleLanding(player) {
+    const space = boardSpaces[player.position];
+    const property = gameState.board[player.position];
+    
+    updateGameDisplay();
+    
+    switch (space.type) {
+        case 'property':
+            handlePropertyLanding(player, property);
+            break;
+        case 'tax':
+            player.balance -= space.price;
+            document.getElementById('actionMessage').classList.add('error');
+            document.getElementById('actionMessage').textContent = `💸 ${player.token} ${player.name} paid $${space.price} in taxes!`;
+            document.getElementById('endTurnBtn').style.display = 'block';
+            break;
+        case 'gotojail':
+            player.position = 10;
+            document.getElementById('actionMessage').textContent = `🚔 ${player.token} ${player.name} goes to Jail!`;
+            document.getElementById('endTurnBtn').style.display = 'block';
+            break;
+        case 'go':
+            document.getElementById('actionMessage').classList.add('success');
+            document.getElementById('actionMessage').textContent = `🎉 ${player.token} ${player.name} is at GO!`;
+            document.getElementById('endTurnBtn').style.display = 'block';
+            break;
+        case 'parking':
+        case 'jail':
+        case 'chest':
+        case 'chance':
+            document.getElementById('actionMessage').textContent = `${player.token} ${player.name} landed on ${space.name}!`;
+            document.getElementById('endTurnBtn').style.display = 'block';
+            break;
+    }
+}
+
+// Handle Property Landing
+function handlePropertyLanding(player, property) {
+    if (property.owner === null) {
+        document.getElementById('actionMessage').textContent = `🏠 ${player.token} ${player.name} landed on unowned ${property.name}. Buy for $${property.price}?`;
+        document.getElementById('buyPropertyBtn').style.display = 'block';
+        document.getElementById('endTurnBtn').style.display = 'block';
+    } else if (property.owner === player) {
+        document.getElementById('actionMessage').classList.add('success');
+        document.getElementById('actionMessage').textContent = `✨ ${player.token} ${player.name} owns ${property.name}!`;
+        document.getElementById('endTurnBtn').style.display = 'block';
+    } else {
+        const rent = Math.ceil(property.price / 10);
+        if (player.balance >= rent) {
+            player.balance -= rent;
+            property.owner.balance += rent;
+            document.getElementById('actionMessage').classList.add('error');
+            document.getElementById('actionMessage').textContent = `💸 ${player.token} ${player.name} paid $${rent} rent to ${property.owner.token} ${property.owner.name}!`;
+        } else {
+            player.isBankrupt = true;
+            document.getElementById('actionMessage').classList.add('error');
+            document.getElementById('actionMessage').textContent = `❌ ${player.token} ${player.name} cannot pay rent and is BANKRUPT!`;
+        }
+        document.getElementById('endTurnBtn').style.display = 'block';
+    }
+}
+
+// Buy Property
+function buyProperty() {
+    const player = gameState.players[gameState.currentPlayerIndex];
+    const property = gameState.board[player.position];
+    
+    if (player.balance >= property.price) {
+        player.balance -= property.price;
+        property.owner = player;
+        player.properties.push(property);
+        document.getElementById('actionMessage').classList.remove('error');
+        document.getElementById('actionMessage').classList.add('success');
+        document.getElementById('actionMessage').textContent = `✅ ${player.token} ${player.name} bought ${property.name} for $${property.price}!`;
+    } else {
+        document.getElementById('actionMessage').classList.remove('success');
+        document.getElementById('actionMessage').classList.add('error');
+        document.getElementById('actionMessage').textContent = `❌ ${player.token} ${player.name} cannot afford ${property.name}!`;
+    }
+    
+    document.getElementById('buyPropertyBtn').style.display = 'none';
+    document.getElementById('endTurnBtn').style.display = 'block';
+    updateGameDisplay();
+}
+
+// End Turn
+function endTurn() {
+    document.getElementById('actionMessage').classList.remove('error', 'success');
+    gameState.currentPlayerIndex = (gameState.currentPlayerIndex + 1) % gameState.players.length;
+    
+    // Check for bankruptcy and skip bankrupt players
+    while (gameState.players[gameState.currentPlayerIndex].isBankrupt && gameState.players.some(p => !p.isBankrupt)) {
+        gameState.currentPlayerIndex = (gameState.currentPlayerIndex + 1) % gameState.players.length;
+    }
+    
+    // Check if only one player left
+    const activePlayers = gameState.players.filter(p => !p.isBankrupt);
+    if (activePlayers.length <= 1) {
+        endGame(activePlayers[0]);
+        return;
+    }
+    
+    // Update round
+    if (gameState.currentPlayerIndex === 0) {
+        gameState.round++;
+    }
+    
+    updateGameDisplay();
+}
+
+// Quit Game
+function quitGame() {
+    if (confirm('Are you sure you want to quit the game?')) {
+        location.reload();
+    }
+}
+
+// End Game
+function endGame(winner) {
+    gameState.gameActive = false;
+    document.getElementById('gameScreen').classList.remove('active');
+    document.getElementById('gameOverScreen').classList.add('active');
+    
+    const winnerInfo = document.getElementById('winnerInfo');
+    winnerInfo.innerHTML = `
+        <div class="trophy">🏆</div>
+        <h2>${winner.token} ${winner.name} WINS!</h2>
+        <p>Total Assets: $${winner.balance + (winner.properties.length * 100)}</p>
+    `;
+    
+    const standings = document.getElementById('finalStandings');
+    const sortedPlayers = [...gameState.players].sort((a, b) => b.balance - a.balance);
+    standings.innerHTML = '<h3>📊 Final Standings:</h3>' + sortedPlayers
+        .map((p, i) => `
+            <div class="standings-entry">
+                <strong>${i + 1}. ${p.token} ${p.name}</strong> - $${p.balance} (${p.properties.length} properties)
+            </div>
+        `)
+        .join('');
+}
