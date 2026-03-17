@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎲 Monopoly Game 🎲</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Setup Screen -->
+    <div id="setupScreen" class="screen active">
+        <div class="setup-container">
+            <h1>🎲 MONOPOLY 🎲</h1>
+            <p class="subtitle">The Classic Board Game</p>
+            
+            <div class="setup-box">
+                <h2>👥 How many players?</h2>
+                <div class="player-selector">
+                    <button class="player-btn" onclick="setPlayers(2)">2 Players</button>
+                    <button class="player-btn" onclick="setPlayers(3)">3 Players</button>
+                    <button class="player-btn" onclick="setPlayers(4)">4 Players</button>
+                    <button class="player-btn" onclick="setPlayers(5)">5 Players</button>
+                    <button class="player-btn" onclick="setPlayers(6)">6 Players</button>
+                    <button class="player-btn" onclick="setPlayers(7)">7 Players</button>
+                    <button class="player-btn" onclick="setPlayers(8)">8 Players</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Player Setup Screen -->
+    <div id="playerSetupScreen" class="screen">
+        <div class="setup-container">
+            <h1>👥 Player Setup</h1>
+            <p class="subtitle" id="currentPlayerSetup">Player 1: Enter your name and choose a token</p>
+            
+            <div class="player-input-section">
+                <input type="text" id="playerNameInput" placeholder="Enter your name" class="name-input">
+            </div>
+
+            <div class="token-selection">
+                <h3>🎭 Choose Your Animal Token:</h3>
+                <div id="tokenGrid" class="token-grid"></div>
+            </div>
+            
+            <div class="current-players">
+                <h3>✅ Players Added:</h3>
+                <ul id="playerList" class="player-list"></ul>
+            </div>
+            
+            <div class="button-group">
+                <button onclick="goBackToSetup()" class="btn-secondary">← Back</button>
+                <button id="nextPlayerBtn" onclick="addPlayer()" class="btn-primary">Add Player →</button>
+                <button id="startGameBtn" onclick="startGame()" class="btn-primary" style="display: none;">Play Game! 🎮</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Game Screen -->
+    <div id="gameScreen" class="screen">
+        <div class="game-wrapper">
+            <!-- Left Sidebar -->
+            <div class="sidebar">
+                <div class="current-player-box">
+                    <h2 id="currentPlayerName">Player Turn</h2>
+                    <div class="player-stats">
+                        <div class="stat">
+                            <span class="label">💰 Balance:</span>
+                            <span class="value" id="playerBalance">$0</span>
+                        </div>
+                        <div class="stat">
+                            <span class="label">📍 Position:</span>
+                            <span class="value" id="playerPosition">GO</span>
+                        </div>
+                        <div class="stat">
+                            <span class="label">🏠 Properties:</span>
+                            <span class="value" id="playerProperties">0</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="game-info-box">
+                    <div class="info-item">
+                        <span class="label">Round:</span>
+                        <span class="value" id="roundNumber">1</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="label">Players:</span>
+                        <span class="value" id="activePlayers">0</span>
+                    </div>
+                </div>
+
+                <div class="action-box">
+                    <div id="actionMessage" class="action-message">Ready to play!</div>
+                    <div class="action-buttons">
+                        <button id="rollDiceBtn" onclick="rollDice()" class="btn-action btn-primary">🎲 Roll Dice</button>
+                        <button id="buyPropertyBtn" onclick="buyProperty()" class="btn-action btn-secondary" style="display:none;">🏠 Buy</button>
+                        <button id="endTurnBtn" onclick="endTurn()" class="btn-action btn-primary" style="display:none;">➡�� End Turn</button>
+                        <button id="quitGameBtn" onclick="quitGame()" class="btn-action btn-danger">❌ Quit</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Board Area -->
+            <div class="main-area">
+                <!-- Monopoly Board -->
+                <div class="monopoly-board">
+                    <!-- Top Row (Right to Left) -->
+                    <div class="board-top">
+                        <div class="board-space corner" id="space39">
+                            <div class="space-name">BOARDWALK</div>
+                            <div class="space-players" id="players39"></div>
+                        </div>
+                        <div class="board-space" id="space38">
+                            <div class="space-name">Luxury Tax</div>
+                            <div class="space-players" id="players38"></div>
+                        </div>
+                        <div class="board-space" id="space37">
+                            <div class="space-name">Park Pl.</div>
+                            <div class="space-players" id="players37"></div>
+                        </div>
+                        <div class="board-space" id="space36">
+                            <div class="space-name">Chance</div>
+                            <div class="space-players" id="players36"></div>
+                        </div>
+                        <div class="board-space" id="space35">
+                            <div class="space-name">Short Line</div>
+                            <div class="space-players" id="players35"></div>
+                        </div>
+                        <div class="board-space" id="space34">
+                            <div class="space-name">PA Ave</div>
+                            <div class="space-players" id="players34"></div>
+                        </div>
+                        <div class="board-space" id="space33">
+                            <div class="space-name">Comm Chest</div>
+                            <div class="space-players" id="players33"></div>
+                        </div>
+                        <div class="board-space" id="space32">
+                            <div class="space-name">NC Ave</div>
+                            <div class="space-players" id="players32"></div>
+                        </div>
+                        <div class="board-space" id="space31">
+                            <div class="space-name">Pacific Ave</div>
+                            <div class="space-players" id="players31"></div>
+                        </div>
+                        <div class="board-space corner" id="space30">
+                            <div class="space-name">GO TO JAIL</div>
+                            <div class="space-players" id="players30"></div>
+                        </div>
+                    </div>
+
+                    <!-- Right Column (Bottom to Top) -->
+                    <div class="board-right">
+                        <div class="board-space" id="space29">
+                            <div class="space-name">Marvin Gdns</div>
+                            <div class="space-players" id="players29"></div>
+                        </div>
+                        <div class="board-space" id="space28">
+                            <div class="space-name">Water Works</div>
+                            <div class="space-players" id="players28"></div>
+                        </div>
+                        <div class="board-space" id="space27">
+                            <div class="space-name">Ventnor Ave</div>
+                            <div class="space-players" id="players27"></div>
+                        </div>
+                        <div class="board-space" id="space26">
+                            <div class="space-name">Atlantic Ave</div>
+                            <div class="space-players" id="players26"></div>
+                        </div>
+                        <div class="board-space" id="space25">
+                            <div class="space-name">B&O RR</div>
+                            <div class="space-players" id="players25"></div>
+                        </div>
+                        <div class="board-space" id="space24">
+                            <div class="space-name">Illinois Ave</div>
+                            <div class="space-players" id="players24"></div>
+                        </div>
+                        <div class="board-space" id="space23">
+                            <div class="space-name">Indiana Ave</div>
+                            <div class="space-players" id="players23"></div>
+                        </div>
+                        <div class="board-space" id="space22">
+                            <div class="space-name">Chance</div>
+                            <div class="space-players" id="players22"></div>
+                        </div>
+                        <div class="board-space" id="space21">
+                            <div class="space-name">Kentucky Ave</div>
+                            <div class="space-players" id="players21"></div>
+                        </div>
+                    </div>
+
+                    <!-- Bottom Row (Left to Right) -->
+                    <div class="board-bottom">
+                        <div class="board-space corner" id="space20">
+                            <div class="space-name">FREE PARKING</div>
+                            <div class="space-players" id="players20"></div>
+                        </div>
+                        <div class="board-space" id="space19">
+                            <div class="space-name">NY Ave</div>
+                            <div class="space-players" id="players19"></div>
+                        </div>
+                        <div class="board-space" id="space18">
+                            <div class="space-name">TN Ave</div>
+                            <div class="space-players" id="players18"></div>
+                        </div>
+                        <div class="board-space" id="space17">
+                            <div class="space-name">Comm Chest</div>
+                            <div class="space-players" id="players17"></div>
+                        </div>
+                        <div class="board-space" id="space16">
+                            <div class="space-name">St James Pl</div>
+                            <div class="space-players" id="players16"></div>
+                        </div>
+                        <div class="board-space" id="space15">
+                            <div class="space-name">Virginia Ave</div>
+                            <div class="space-players" id="players15"></div>
+                        </div>
+                        <div class="board-space" id="space14">
+                            <div class="space-name">States Ave</div>
+                            <div class="space-players" id="players14"></div>
+                        </div>
+                        <div class="board-space" id="space13">
+                            <div class="space-name">Elec Co</div>
+                            <div class="space-players" id="players13"></div>
+                        </div>
+                        <div class="board-space" id="space12">
+                            <div class="space-name">St Chas Pl</div>
+                            <div class="space-players" id="players12"></div>
+                        </div>
+                        <div class="board-space corner" id="space10">
+                            <div class="space-name">JAIL</div>
+                            <div class="space-players" id="players10"></div>
+                        </div>
+                    </div>
+
+                    <!-- Left Column (Top to Bottom) -->
+                    <div class="board-left">
+                        <div class="board-space" id="space11">
+                            <div class="space-name">Comm Chest</div>
+                            <div class="space-players" id="players11"></div>
+                        </div>
+                        <div class="board-space" id="space9">
+                            <div class="space-name">CT Ave</div>
+                            <div class="space-players" id="players9"></div>
+                        </div>
+                        <div class="board-space" id="space8">
+                            <div class="space-name">Vermont Ave</div>
+                            <div class="space-players" id="players8"></div>
+                        </div>
+                        <div class="board-space" id="space7">
+                            <div class="space-name">Chance</div>
+                            <div class="space-players" id="players7"></div>
+                        </div>
+                        <div class="board-space" id="space6">
+                            <div class="space-name">Oriental Ave</div>
+                            <div class="space-players" id="players6"></div>
+                        </div>
+                        <div class="board-space" id="space5">
+                            <div class="space-name">Reading RR</div>
+                            <div class="space-players" id="players5"></div>
+                        </div>
+                        <div class="board-space" id="space4">
+                            <div class="space-name">Income Tax</div>
+                            <div class="space-players" id="players4"></div>
+                        </div>
+                        <div class="board-space" id="space3">
+                            <div class="space-name">Baltic Ave</div>
+                            <div class="space-players" id="players3"></div>
+                        </div>
+                        <div class="board-space" id="space2">
+                            <div class="space-name">Comm Chest</div>
+                            <div class="space-players" id="players2"></div>
+                        </div>
+                    </div>
+
+                    <!-- Center -->
+                    <div class="board-center">
+                        <div class="center-text">FREE PARKING</div>
+                    </div>
+
+                    <!-- Start Corner -->
+                    <div class="board-space corner" id="space0">
+                        <div class="space-name">GO</div>
+                        <div class="space-players" id="players0"></div>
+                    </div>
+                </div>
+
+                <!-- Player Status Grid -->
+                <div class="players-section">
+                    <h3>📊 Players</h3>
+                    <div id="playerStatusGrid" class="player-status-grid"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Game Over Screen -->
+    <div id="gameOverScreen" class="screen">
+        <div class="setup-container">
+            <h1>🏆 GAME OVER 🏆</h1>
+            <div id="winnerInfo" class="winner-box"></div>
+            <div id="finalStandings" class="standings"></div>
+            <button onclick="location.reload()" class="btn-primary">Play Again</button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
